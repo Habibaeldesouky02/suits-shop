@@ -1,8 +1,11 @@
 import { emailConfigured, sendConfirmationToCustomer, sendOrderToShop } from "@/lib/email";
 import { parseOrder } from "@/lib/orders";
+import { sendOrderToWhatsApp, whatsappConfigured } from "@/lib/whatsapp";
 
 /**
- * Receives an order from the checkout page and emails it to the shop.
+ * Receives an order from the checkout page and sends it to the shop:
+ * by WhatsApp (CALLMEBOT_* settings) and/or by email (RESEND_* settings),
+ * whichever are set up. The order counts as received when at least one arrives.
  *
  * Payment is either cash on delivery or online. For online orders the shop
  * currently sends the payment link by hand (e.g. from the Paymob dashboard).
@@ -10,7 +13,12 @@ import { parseOrder } from "@/lib/orders";
  * payment link here and send it to the customer by SMS / email.
  */
 export async function POST(request: Request) {
-  if (!emailConfigured()) {
+  const channels = [
+    whatsappConfigured() && { name: "WhatsApp", send: sendOrderToWhatsApp },
+    emailConfigured() && { name: "email", send: sendOrderToShop },
+  ].filter((c) => c !== false);
+
+  if (channels.length === 0) {
     return Response.json({ error: "not_configured" }, { status: 503 });
   }
 
@@ -33,18 +41,21 @@ export async function POST(request: Request) {
   // Also written to the server logs (Vercel → Logs) as a backup copy of every order.
   console.log(`NEW ORDER ${order.number}`, JSON.stringify(order));
 
-  try {
-    await sendOrderToShop(order);
-  } catch (error) {
-    console.error(`Could not email order ${order.number}:`, error);
+  const results = await Promise.allSettled(channels.map((c) => c.send(order)));
+  results.forEach((r, i) => {
+    if (r.status === "rejected") console.error(`Could not send order ${order.number} by ${channels[i].name}:`, r.reason);
+  });
+  if (!results.some((r) => r.status === "fulfilled")) {
     return Response.json({ error: "send_failed" }, { status: 502 });
   }
 
-  try {
-    await sendConfirmationToCustomer(order);
-  } catch (error) {
-    // The shop already has the order, so don't fail the checkout for this.
-    console.error(`Could not email confirmation for ${order.number}:`, error);
+  if (emailConfigured()) {
+    try {
+      await sendConfirmationToCustomer(order);
+    } catch (error) {
+      // The shop already has the order, so don't fail the checkout for this.
+      console.error(`Could not email confirmation for ${order.number}:`, error);
+    }
   }
 
   return Response.json({ orderNumber: order.number, total: order.total });

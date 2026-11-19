@@ -121,7 +121,7 @@ const en = {
       phone: "Please enter a valid Egyptian mobile number, e.g. 010 1234 5678.",
       email: "Please enter a valid email address.",
       general: "Your order could not be sent. Please try again.",
-      notConfigured: "Orders can't be received yet. The shop owner needs to add the email settings (see README).",
+      notConfigured: "Orders can't be received yet. The shop owner needs to set up order notifications (see README).",
     },
   },
   success: {
@@ -306,7 +306,7 @@ const ar: Dictionary = {
       phone: "اكتب رقم موبايل مصري صح، زي 010 1234 5678.",
       email: "اكتب إيميل صح.",
       general: "الطلب ماتبعتش، جرّب تاني.",
-      notConfigured: "مش بنقدر نستقبل طلبات دلوقتي. صاحب المحل لازم يظبط إعدادات الإيميل (شوف README).",
+      notConfigured: "مش بنقدر نستقبل طلبات دلوقتي. صاحب المحل لازم يظبط إعدادات استلام الطلبات (شوف README).",
     },
   },
   success: {

@@ -2,7 +2,7 @@
 
 A bilingual (Arabic / English) web shop for suits. Customers browse the collection, pick colour, fit and size, and order with **cash on delivery** anywhere in Egypt. Every order is emailed to the shop.
 
-**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · Resend (email)
+**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · WhatsApp (CallMeBot) / Resend (email)
 
 ## Features
 
@@ -13,7 +13,7 @@ A bilingual (Arabic / English) web shop for suits. Customers browse the collecti
 - Checkout with name, Egyptian mobile number, governorate (all 27), city and address
 - Delivery fee by governorate zone, free above a set amount
 - Cash on delivery, or pay online by card, InstaPay or Vodafone Cash (payment link)
-- Each order is emailed to the shop with the customer's details, a WhatsApp link and the items
+- Each order is sent to your WhatsApp (and/or email) with the customer's details and the items
 - Prices and delivery fees are always calculated on the server, so customers can't change them
 - Every order is also written to the server logs as a backup (Vercel → your project → Logs, search for `NEW ORDER`)
 
@@ -28,23 +28,25 @@ npm run dev
 
 Open http://localhost:3000.
 
-## Receive orders by email (Resend)
+## Receive orders on WhatsApp
 
-1. Create a free account at https://resend.com.
-2. Go to **API Keys → Create API Key** and copy the key (`re_...`).
-3. In Vercel: your project → **Settings → Environment Variables**, add:
-   - `RESEND_API_KEY` = your key
-   - `ORDER_EMAIL_TO` = the email you signed up to Resend with
-4. Go to **Deployments**, click **⋯** on the latest one and choose **Redeploy**.
+Every order is sent to your own WhatsApp number using the free [CallMeBot](https://www.callmebot.com) service (it can only message your own number, which is exactly what this needs).
 
-Place a test order: it arrives in your inbox within seconds.
+1. Open the CallMeBot WhatsApp page (callmebot.com → WhatsApp) and save the bot's phone number shown there as a contact.
+2. Send it this WhatsApp message: `I allow callmebot to send me messages`
+3. Within a couple of minutes the bot replies with your **API key**. (If not, try again after 24 hours.)
+4. In Vercel: your project → **Settings → Environment Variables**, add:
+   - `CALLMEBOT_PHONE` = your WhatsApp number, e.g. `+201001234567`
+   - `CALLMEBOT_APIKEY` = the key from the bot
+5. **Deployments → ⋯ → Redeploy**, then place a test order.
 
-To run locally with email, copy `.env.example` to `.env.local` and fill in the same values.
+Each message shows the order number, payment method (with a reminder to send a payment link for online orders), customer, address, items and total.
 
-**Later, with your own domain (fastsuit.com):** verify the domain in Resend (Domains → Add Domain). Then you can:
-- send orders to any address, or several (`ORDER_EMAIL_TO=a@x.com,b@y.com`)
-- set `ORDER_EMAIL_FROM=Fast Suit <orders@fastsuit.com>`
-- set `SEND_CUSTOMER_EMAILS=true` to send customers a confirmation when they enter an email
+### Also (or instead) by email
+
+Add `RESEND_API_KEY` and `ORDER_EMAIL_TO` (see `.env.example`) to get every order by email too. If both WhatsApp and email are set up, an order counts as received when at least one of them arrives. To stop emails, delete those two variables and redeploy.
+
+Every order is also written to the server logs as a backup: Vercel → your project → **Logs**, search for `NEW ORDER`.
 
 ## Edit the shop
 
@@ -109,4 +111,4 @@ src/
 - [ ] Add real product photos
 - [ ] Check the delivery fees, free-delivery limit and the 14-day exchange text
 - [ ] Fill in the legal pages (terms, privacy, returns)
-- [ ] Set up Resend so orders reach you, and place a test order
+- [ ] Set up WhatsApp order messages (CallMeBot) and place a test order

@@ -95,10 +95,10 @@ export async function sendConfirmationToCustomer(order: Order) {
   if (!order.customer.email || process.env.SEND_CUSTOMER_EMAILS !== "true") return;
   const ar = order.locale === "ar";
   const html = `<div dir="${ar ? "rtl" : "ltr"}" style="font-family:Arial,sans-serif;max-width:640px;color:#111">
-    <h2>${ar ? "شكراً لطلبك من فاست سوت!" : "Thank you for your Fast Suit order!"}</h2>
+    <h2>${ar ? "شكراً على طلبك من فاست سوت!" : "Thank you for your Fast Suit order!"}</h2>
     <p>${
       ar
-        ? `رقم طلبك <b>${escape(order.number)}</b>. سنتصل بك قريباً لتأكيد الطلب. المبلغ المطلوب عند الاستلام: <b>${formatPrice(order.total, "ar")}</b>.`
+        ? `رقم طلبك <b>${escape(order.number)}</b>. هنكلمك قريب عشان نأكد الطلب. المطلوب تدفعه عند الاستلام: <b>${formatPrice(order.total, "ar")}</b>.`
         : `Your order number is <b>${escape(order.number)}</b>. We'll call you shortly to confirm it. Amount to pay on delivery: <b>${egp(order.total)}</b>.`
     }</p>
     <div dir="ltr">${itemsTable(order)}</div>

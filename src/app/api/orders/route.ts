@@ -1,9 +1,11 @@
 import { emailConfigured, sendConfirmationToCustomer, sendOrderToShop } from "@/lib/email";
 import { parseOrder } from "@/lib/orders";
 import { sendOrderToWhatsApp, whatsappConfigured } from "@/lib/whatsapp";
+import { orderWhatsAppLink, shopWhatsAppNumber } from "@/lib/whatsapp-link";
 
 /**
- * Receives an order from the checkout page and sends it to the shop:
+ * Receives an order from the checkout page. If SHOP_WHATSAPP_NUMBER is set, it returns
+ * a WhatsApp link so the customer can send the order to the shop's WhatsApp. It is also sent:
  * by WhatsApp (WHATABOT_* or CALLMEBOT_* settings) and/or by email (RESEND_* settings),
  * whichever are set up. The order counts as received when at least one arrives.
  *
@@ -18,7 +20,11 @@ export async function POST(request: Request) {
     emailConfigured() && { name: "email", send: sendOrderToShop },
   ].filter((c) => c !== false);
 
-  if (channels.length === 0) {
+  // With SHOP_WHATSAPP_NUMBER set, the customer sends the order to the shop's WhatsApp
+  // themselves (from the thank-you page); other channels then act as a backup.
+  const customerSendsWhatsApp = Boolean(shopWhatsAppNumber());
+
+  if (channels.length === 0 && !customerSendsWhatsApp) {
     return Response.json({ error: "not_configured" }, { status: 503 });
   }
 
@@ -45,7 +51,7 @@ export async function POST(request: Request) {
   results.forEach((r, i) => {
     if (r.status === "rejected") console.error(`Could not send order ${order.number} by ${channels[i].name}:`, r.reason);
   });
-  if (!results.some((r) => r.status === "fulfilled")) {
+  if (channels.length > 0 && !results.some((r) => r.status === "fulfilled") && !customerSendsWhatsApp) {
     return Response.json({ error: "send_failed" }, { status: 502 });
   }
 
@@ -58,5 +64,5 @@ export async function POST(request: Request) {
     }
   }
 
-  return Response.json({ orderNumber: order.number, total: order.total });
+  return Response.json({ orderNumber: order.number, total: order.total, whatsappUrl: orderWhatsAppLink(order) });
 }

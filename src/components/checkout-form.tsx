@@ -76,6 +76,13 @@ export function CheckoutForm() {
       const data = await res.json();
       if (res.ok && data.orderNumber) {
         const pay = paymentMethod === "online" ? `&pay=online&method=${onlineMethod}` : "";
+        if (data.whatsappUrl) {
+          try {
+            sessionStorage.setItem(`fastsuit-wa-${data.orderNumber}`, data.whatsappUrl);
+          } catch {
+            // Storage unavailable: the thank-you page simply won't show the WhatsApp button.
+          }
+        }
         router.push(`/${locale}/checkout/success?order=${encodeURIComponent(data.orderNumber)}&total=${data.total}${pay}`);
         return;
       }

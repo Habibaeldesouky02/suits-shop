@@ -13,7 +13,8 @@ A bilingual (Arabic / English) web shop for suits. Customers browse the collecti
 - Checkout with name, Egyptian mobile number, governorate (all 27), city and address
 - Delivery fee by governorate zone, free above a set amount
 - Cash on delivery, or pay online by card, InstaPay or Vodafone Cash (payment link)
-- Each order is sent to your WhatsApp (and/or email) with the customer's details and the items
+- After ordering, the customer sends the order to your WhatsApp with one tap (message already typed)
+- Each order can also be sent to you automatically by WhatsApp bot and/or email
 - Prices and delivery fees are always calculated on the server, so customers can't change them
 - Every order is also written to the server logs as a backup (Vercel → your project → Logs, search for `NEW ORDER`)
 
@@ -28,7 +29,15 @@ npm run dev
 
 Open http://localhost:3000.
 
-## Receive orders on WhatsApp
+## Customers send their order to your WhatsApp (simplest, free)
+
+Set `SHOP_WHATSAPP_NUMBER` in Vercel (your WhatsApp number in international format, e.g. `491701234567` or `201001234567`) and redeploy.
+
+After ordering, the thank-you page shows **"Last step: send us your order on WhatsApp"** with a big green button. It opens WhatsApp with your number and the full order already typed (order number, suits, sizes, total, payment method, name, mobile and address, in the customer's language). The customer just presses Send, and you can reply in that chat to confirm or send a payment link.
+
+If a customer doesn't press Send, you still get the order through any channel below that is set up (email recommended as a backup), and in Vercel → Logs (`NEW ORDER`).
+
+## Receive orders on WhatsApp automatically
 
 Every order is sent to your own WhatsApp number with a free service that can only message your own number (exactly what this needs). Two are supported; set up one of them.
 
@@ -120,4 +129,4 @@ src/
 - [ ] Add real product photos
 - [ ] Check the delivery fees, free-delivery limit and the 14-day exchange text
 - [ ] Fill in the legal pages (terms, privacy, returns)
-- [ ] Set up WhatsApp order messages (Whatabot or CallMeBot) and place a test order
+- [ ] Set `SHOP_WHATSAPP_NUMBER`, keep email as a backup, and place a test order

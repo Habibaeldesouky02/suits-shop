@@ -2,7 +2,7 @@
 
 A bilingual (Arabic / English) web shop for suits. Customers browse the collection, pick colour, fit and size, and order with **cash on delivery** anywhere in Egypt. Every order is emailed to the shop.
 
-**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · WhatsApp (CallMeBot) / Resend (email)
+**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · WhatsApp (Whatabot / CallMeBot) / Resend (email)
 
 ## Features
 
@@ -30,17 +30,26 @@ Open http://localhost:3000.
 
 ## Receive orders on WhatsApp
 
-Every order is sent to your own WhatsApp number using the free [CallMeBot](https://www.callmebot.com) service (it can only message your own number, which is exactly what this needs).
+Every order is sent to your own WhatsApp number with a free service that can only message your own number (exactly what this needs). Two are supported; set up one of them.
 
-1. Open the CallMeBot WhatsApp page (callmebot.com → WhatsApp) and save the bot's phone number shown there as a contact.
-2. Send it this WhatsApp message: `I allow callmebot to send me messages`
-3. Within a couple of minutes the bot replies with your **API key**. (If not, try again after 24 hours.)
-4. In Vercel: your project → **Settings → Environment Variables**, add:
-   - `CALLMEBOT_PHONE` = your WhatsApp number, e.g. `+201001234567`
-   - `CALLMEBOT_APIKEY` = the key from the bot
-5. **Deployments → ⋯ → Redeploy**, then place a test order.
+### Whatabot (recommended)
 
-Each message shows the order number, payment method (with a reminder to send a payment link for online orders), customer, address, items and total.
+1. On [whatabot.io](https://whatabot.io) → **Get Started**, save the Whatabot phone number shown there as a contact.
+2. Send it the activation message shown on that page and wait for the reply with your **API key**.
+3. In Vercel: your project → **Settings → Environment Variables**, add:
+   - `WHATABOT_PHONE` = your WhatsApp number, e.g. `201001234567`
+   - `WHATABOT_APIKEY` = the key from the bot
+4. **Deployments → ⋯ → Redeploy**, then place a test order.
+
+Whatabot allows 200 characters per message, so each order arrives as a few short messages in a row, each marked like `(2/4 · FS-261119-AB12)`.
+
+### CallMeBot
+
+1. On callmebot.com → **WhatsApp**, save the bot's phone number (when it is accepting new users).
+2. Send it: `I allow callmebot to send me messages` and wait for your **API key**.
+3. In Vercel add `CALLMEBOT_PHONE` (e.g. `+201001234567`) and `CALLMEBOT_APIKEY`, then redeploy.
+
+If both are set up, Whatabot is used.
 
 ### Also (or instead) by email
 
@@ -111,4 +120,4 @@ src/
 - [ ] Add real product photos
 - [ ] Check the delivery fees, free-delivery limit and the 14-day exchange text
 - [ ] Fill in the legal pages (terms, privacy, returns)
-- [ ] Set up WhatsApp order messages (CallMeBot) and place a test order
+- [ ] Set up WhatsApp order messages (Whatabot or CallMeBot) and place a test order

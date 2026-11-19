@@ -5,65 +5,122 @@ import { formatPrice } from "./products";
 import { sizeLabel } from "./sizes";
 
 /*
- * Sends each new order to the shop owner's WhatsApp using CallMeBot
- * (https://www.callmebot.com). It can only send messages to your own number.
- *   CALLMEBOT_PHONE  – your WhatsApp number, e.g. +201001234567 or 01001234567
+ * Sends each new order to the shop owner's own WhatsApp, using one of two free
+ * services (whichever is set up; Whatabot is used if both are):
+ *
+ * Whatabot (https://whatabot.io)
+ *   WHATABOT_PHONE   – your WhatsApp number, e.g. 201001234567 (01001234567 also works)
+ *   WHATABOT_APIKEY  – the API key the Whatabot bot sent you on WhatsApp
+ *
+ * CallMeBot (https://www.callmebot.com)
+ *   CALLMEBOT_PHONE  – your WhatsApp number, e.g. +201001234567 (01001234567 also works)
  *   CALLMEBOT_APIKEY – the API key the CallMeBot bot sent you on WhatsApp
  */
-const API_URL = process.env.CALLMEBOT_API_URL ?? "https://api.callmebot.com/whatsapp.php";
+const WHATABOT_URL = process.env.WHATABOT_API_URL ?? "https://api.whatabot.io/Whatsapp/RequestSendMessage";
+const CALLMEBOT_URL = process.env.CALLMEBOT_API_URL ?? "https://api.callmebot.com/whatsapp.php";
+/** Whatabot accepts at most 200 characters per message. */
+const WHATABOT_MAX_LENGTH = 200;
+
+const whatabotEnabled = () => Boolean(process.env.WHATABOT_PHONE && process.env.WHATABOT_APIKEY);
+const callMeBotEnabled = () => Boolean(process.env.CALLMEBOT_PHONE && process.env.CALLMEBOT_APIKEY);
 
 export function whatsappConfigured() {
-  return Boolean(process.env.CALLMEBOT_PHONE && process.env.CALLMEBOT_APIKEY);
+  return whatabotEnabled() || callMeBotEnabled();
 }
 
-function internationalNumber(raw: string) {
-  const digits = raw.replace(/[\s\-()]/g, "");
-  if (digits.startsWith("+")) return digits;
-  if (digits.startsWith("00")) return `+${digits.slice(2)}`;
-  if (digits.startsWith("01")) return `+2${digits}`; // Egyptian mobile 01… → +201…
-  return `+${digits}`;
+/** "01001234567", "+20 100 123 4567", "00201001234567" → "201001234567" */
+function internationalDigits(raw: string) {
+  const digits = raw.replace(/\D/g, "");
+  if (digits.startsWith("00")) return digits.slice(2);
+  if (digits.startsWith("01") && digits.length === 11) return `2${digits}`; // Egyptian mobile
+  return digits;
 }
 
 const egp = (piasters: number) => formatPrice(piasters, "en");
 
-export function orderMessage(order: Order) {
+/** The order as short lines, each one a separate piece of information. */
+export function orderLines(order: Order) {
   const c = order.customer;
   const a = order.address;
   const online = order.paymentMethod === "online" && order.onlineMethod;
-  const lines = [
-    `*New order ${order.number}*`,
+  return [
+    `🛍️ *New order ${order.number}* – ${egp(order.total)}`,
     online
-      ? `💳 *PAY ONLINE – ${ONLINE_METHOD_NAMES[order.onlineMethod!]}*\nSend a payment link for ${egp(order.total)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}`
+      ? `💳 *PAY ONLINE – ${ONLINE_METHOD_NAMES[order.onlineMethod!]}*. Send a payment link for ${egp(order.total)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}`
       : `💵 Cash on delivery`,
-    "",
     `👤 ${c.name}`,
     `📱 ${c.phone}  wa.me/2${c.phone}`,
     ...(c.email ? [`✉️ ${c.email}`] : []),
     `📍 ${a.street}, ${a.city}, ${a.governorate}`,
     ...(a.notes ? [`📝 ${a.notes}`] : []),
-    "",
     ...order.items.map(
       (i) =>
         `• ${i.name} – ${i.color}, ${i.fit === "slim" ? "Slim" : "Regular"}, size ${sizeLabel(i.size)} × ${i.quantity} = ${egp(i.lineTotal)}`,
     ),
-    "",
-    `Subtotal: ${egp(order.subtotal)}`,
-    `Delivery: ${order.shipping === 0 ? "Free" : egp(order.shipping)}`,
-    `*Total: ${egp(order.total)}*`,
+    `Subtotal ${egp(order.subtotal)} · Delivery ${order.shipping === 0 ? "free" : egp(order.shipping)} · *Total ${egp(order.total)}*`,
   ];
-  return lines.join("\n");
 }
 
-export async function sendOrderToWhatsApp(order: Order) {
-  const url = new URL(API_URL);
-  url.searchParams.set("phone", internationalNumber(process.env.CALLMEBOT_PHONE!));
-  url.searchParams.set("apikey", process.env.CALLMEBOT_APIKEY!);
-  url.searchParams.set("text", orderMessage(order));
+/** Packs lines into as few messages as possible, each at most `max` characters. */
+export function packMessages(lines: string[], max: number) {
+  const messages: string[] = [];
+  let current = "";
+  for (const line of lines) {
+    // A single line longer than the limit is cut into pieces.
+    const pieces = line.length <= max ? [line] : (line.match(new RegExp(`[\\s\\S]{1,${max}}`, "g")) ?? []);
+    for (const piece of pieces) {
+      if (!current) current = piece;
+      else if (current.length + 1 + piece.length <= max) current += `\n${piece}`;
+      else {
+        messages.push(current);
+        current = piece;
+      }
+    }
+  }
+  if (current) messages.push(current);
+  return messages;
+}
 
+async function sendWithWhatabot(text: string) {
+  const res = await fetch(WHATABOT_URL, {
+    method: "POST",
+    headers: { "Content-Type": "application/json" },
+    body: JSON.stringify({
+      ApiKey: process.env.WHATABOT_APIKEY,
+      Text: text,
+      Phone: internationalDigits(process.env.WHATABOT_PHONE!),
+    }),
+    signal: AbortSignal.timeout(20000),
+  });
+  if (!res.ok) {
+    throw new Error(`Whatabot responded ${res.status}: ${(await res.text()).slice(0, 300)}`);
+  }
+}
+
+async function sendWithCallMeBot(text: string) {
+  const url = new URL(CALLMEBOT_URL);
+  url.searchParams.set("phone", `+${internationalDigits(process.env.CALLMEBOT_PHONE!)}`);
+  url.searchParams.set("apikey", process.env.CALLMEBOT_APIKEY!);
+  url.searchParams.set("text", text);
   const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
   const body = await res.text();
   // CallMeBot answers with a short web page; errors mention "error" or "invalid".
   if (!res.ok || (/error|invalid/i.test(body) && !/queued|sent/i.test(body))) {
     throw new Error(`CallMeBot responded ${res.status}: ${body.slice(0, 300)}`);
   }
+}
+
+export async function sendOrderToWhatsApp(order: Order) {
+  const lines = orderLines(order);
+  if (whatabotEnabled()) {
+    // Leave room for the "(2/3 · FS-261119-AB12)" label added to each message.
+    const messages = packMessages(lines, WHATABOT_MAX_LENGTH - 26);
+    // Send one after another so they arrive in the right order.
+    for (const [i, message] of messages.entries()) {
+      await sendWithWhatabot(messages.length > 1 ? `${message}\n(${i + 1}/${messages.length} · ${order.number})` : message);
+      if (i < messages.length - 1) await new Promise((r) => setTimeout(r, 800));
+    }
+    return;
+  }
+  await sendWithCallMeBot(lines.join("\n"));
 }

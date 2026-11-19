@@ -4,7 +4,7 @@ import { sendOrderToWhatsApp, whatsappConfigured } from "@/lib/whatsapp";
 
 /**
  * Receives an order from the checkout page and sends it to the shop:
- * by WhatsApp (CALLMEBOT_* settings) and/or by email (RESEND_* settings),
+ * by WhatsApp (WHATABOT_* or CALLMEBOT_* settings) and/or by email (RESEND_* settings),
  * whichever are set up. The order counts as received when at least one arrives.
  *
  * Payment is either cash on delivery or online. For online orders the shop

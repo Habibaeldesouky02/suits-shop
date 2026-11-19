@@ -19,11 +19,23 @@ export const SHOP = {
 export type ShippingZone = keyof typeof SHOP.shippingByZone;
 
 /**
- * How customers can pay. Cash on delivery works now.
- * To add Paymob later, add "paymob" here and handle it in src/app/api/orders/route.ts.
+ * How customers can pay:
+ *   cod    – cash on delivery
+ *   online – the shop sends a payment link (SMS / email); the customer pays
+ *            with one of ONLINE_METHODS on the payment page
  */
-export const PAYMENT_METHODS = ["cod"] as const;
+export const PAYMENT_METHODS = ["cod", "online"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];
+
+export const ONLINE_METHODS = ["card", "instapay", "vodafone_cash"] as const;
+export type OnlineMethod = (typeof ONLINE_METHODS)[number];
+
+/** Names used in the order email to the shop. */
+export const ONLINE_METHOD_NAMES: Record<OnlineMethod, string> = {
+  card: "Card (Visa / Mastercard / Meeza)",
+  instapay: "InstaPay",
+  vodafone_cash: "Vodafone Cash",
+};
 
 export const SIZES = ["44", "46", "48", "50", "52", "54", "56", "58"] as const;
 export type Size = (typeof SIZES)[number];

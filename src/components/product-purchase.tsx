@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useState } from "react";
 import { SIZES, SHOP, type Fit, type Size } from "@/lib/config";
 import { formatPrice, type Product } from "@/lib/products";
+import { SIZE_INFO, sizeLabel } from "@/lib/sizes";
 import { useCart } from "./cart-provider";
 import { useI18n } from "./locale-provider";
 import { ProductVisual } from "./product-visual";
@@ -87,7 +88,7 @@ export function ProductPurchase({ product, children }: { product: Product; child
           <div className="flex items-center justify-between">
             <p className="text-sm font-semibold">{t.product.size}</p>
             <Link href={`/${locale}/size-guide`} className="text-sm text-gold-300 underline-offset-4 hover:underline">
-              {t.product.sizeGuide}
+              {t.product.sizeHelp}
             </Link>
           </div>
           <div className="mt-3 grid grid-cols-4 gap-2 sm:grid-cols-8">
@@ -99,10 +100,12 @@ export function ProductPurchase({ product, children }: { product: Product; child
                   setSize(s);
                   setMessage(null);
                 }}
-                className={option(s === size)}
+                className={`${option(s === size)} flex flex-col items-center px-2 leading-tight`}
                 aria-pressed={s === size}
+                aria-label={sizeLabel(s)}
               >
-                {s}
+                <span>{s}</span>
+                <span className="text-[11px] opacity-60">{SIZE_INFO[s].letter}</span>
               </button>
             ))}
           </div>

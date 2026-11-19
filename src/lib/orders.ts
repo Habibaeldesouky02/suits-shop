@@ -1,7 +1,17 @@
 import "server-only";
 import { randomInt } from "node:crypto";
 import { isLocale, type Locale } from "@/i18n/config";
-import { FITS, PAYMENT_METHODS, SHOP, SIZES, type Fit, type PaymentMethod, type Size } from "./config";
+import {
+  FITS,
+  ONLINE_METHODS,
+  PAYMENT_METHODS,
+  SHOP,
+  SIZES,
+  type Fit,
+  type OnlineMethod,
+  type PaymentMethod,
+  type Size,
+} from "./config";
 import { getGovernorate, normalizeEgyptianMobile } from "./egypt";
 import { calculateTotals } from "./pricing";
 import { getProduct } from "./products";
@@ -22,6 +32,8 @@ export type Order = {
   createdAt: string;
   locale: Locale;
   paymentMethod: PaymentMethod;
+  /** Set when paymentMethod is "online". */
+  onlineMethod?: OnlineMethod;
   customer: { name: string; phone: string; email?: string };
   address: { governorateId: string; governorate: string; governorateAr: string; city: string; street: string; notes?: string };
   items: OrderItem[];
@@ -77,6 +89,8 @@ export function parseOrder(body: Record<string, unknown>): ParseResult {
 
   const paymentMethod = PAYMENT_METHODS.find((m) => m === body.paymentMethod);
   if (!paymentMethod) return { error: "invalid", field: "payment" };
+  const onlineMethod = ONLINE_METHODS.find((m) => m === body.onlineMethod);
+  if (paymentMethod === "online" && !onlineMethod) return { error: "invalid", field: "payment" };
 
   const rawItems = Array.isArray(body.items) ? body.items : [];
   if (rawItems.length === 0 || rawItems.length > 30) return { error: "invalid", field: "items" };
@@ -111,6 +125,7 @@ export function parseOrder(body: Record<string, unknown>): ParseResult {
       createdAt: new Date().toISOString(),
       locale,
       paymentMethod,
+      onlineMethod: paymentMethod === "online" ? onlineMethod : undefined,
       customer: { name, phone, email: email || undefined },
       address: {
         governorateId: governorate.id,

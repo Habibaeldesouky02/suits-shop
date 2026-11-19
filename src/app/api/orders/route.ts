@@ -4,8 +4,10 @@ import { parseOrder } from "@/lib/orders";
 /**
  * Receives an order from the checkout page and emails it to the shop.
  *
- * Payment is cash on delivery. To add Paymob later: when paymentMethod is
- * "paymob", create a Paymob payment here and return its checkout URL instead.
+ * Payment is either cash on delivery or online. For online orders the shop
+ * currently sends the payment link by hand (e.g. from the Paymob dashboard).
+ * To automate it later: when order.paymentMethod is "online", create a Paymob
+ * payment link here and send it to the customer by SMS / email.
  */
 export async function POST(request: Request) {
   if (!emailConfigured()) {

@@ -12,7 +12,7 @@ A bilingual (Arabic / English) web shop for suits. Customers browse the collecti
 - Cart saved in the browser
 - Checkout with name, Egyptian mobile number, governorate (all 27), city and address
 - Delivery fee by governorate zone, free above a set amount
-- Cash on delivery
+- Cash on delivery, or pay online by card, InstaPay or Vodafone Cash (payment link)
 - Each order is emailed to the shop with the customer's details, a WhatsApp link and the items
 - Prices and delivery fees are always calculated on the server, so customers can't change them
 - Every order is also written to the server logs as a backup (Vercel → your project → Logs, search for `NEW ORDER`)
@@ -69,14 +69,18 @@ images: ["/products/midnight-classic-1.jpg"],
 
 Until a product has photos, the shop shows a drawn suit in the product's colour.
 
-## Adding online payment later (Paymob)
+## Online payment (card, InstaPay, Vodafone Cash)
 
-Stripe is not available for businesses in Egypt. For cards, Meeza, mobile wallets (Vodafone Cash etc.) and ValU, use [Paymob](https://paymob.com):
+At checkout the customer chooses **cash on delivery** or **pay online**. For online, they pick one of: bank card (Visa / Mastercard / Meeza), InstaPay or Vodafone Cash.
 
-1. Open a Paymob merchant account (needs business documents).
-2. Add `"paymob"` to `PAYMENT_METHODS` in `src/lib/config.ts`.
-3. In `src/app/api/orders/route.ts`, create the Paymob payment for those orders and return its checkout URL.
-4. Add a Paymob webhook route that marks the order as paid.
+For an online order, the order email starts with a yellow **"Action needed: send a payment link"** box showing the amount, the chosen method and the customer's mobile number and email. Send the link and ship once the payment has arrived:
+
+- **Card or Vodafone Cash:** create a Payment Link in your [Paymob](https://paymob.com) dashboard and share it by SMS or email.
+- **InstaPay:** send your InstaPay payment link or address, or a Paymob link if InstaPay is enabled on your Paymob account.
+
+Stripe is not available for businesses in Egypt, so Paymob is the recommended provider.
+
+**Automating it later:** once you have a Paymob account and API keys, the link can be created and sent automatically when the order is placed (the place for this is marked in `src/app/api/orders/route.ts`). Sending SMS automatically also needs an SMS service.
 
 ## Project structure
 

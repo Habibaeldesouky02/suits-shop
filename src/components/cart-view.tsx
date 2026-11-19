@@ -8,6 +8,7 @@ import { cartKey, useCart } from "./cart-provider";
 import { useI18n } from "./locale-provider";
 import { SuitIllustration } from "./suit-illustration";
 import { TrashIcon } from "./icons";
+import { sizeLabel } from "@/lib/sizes";
 
 export function CartView() {
   const { locale, t } = useI18n();
@@ -52,7 +53,7 @@ export function CartView() {
                       {product.name[locale]}
                     </Link>
                     <p className="mt-1 text-sm text-white/60">
-                      {color.name[locale]} · {t.fits[item.fit]} · EU {item.size}
+                      {color.name[locale]} · {t.fits[item.fit]} · {sizeLabel(item.size)}
                     </p>
                     <div className="mt-3 flex items-center gap-4">
                       <select

@@ -4,18 +4,25 @@ import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { useState } from "react";
 import type { Dictionary } from "@/i18n/dictionaries";
+import { ONLINE_METHODS, type OnlineMethod, type PaymentMethod } from "@/lib/config";
 import { GOVERNORATES, normalizeEgyptianMobile } from "@/lib/egypt";
 import { calculateTotals } from "@/lib/pricing";
 import { formatPrice, getProduct } from "@/lib/products";
 import { cartKey, useCart } from "./cart-provider";
 import { useI18n } from "./locale-provider";
-import { CheckIcon } from "./icons";
+import { sizeLabel } from "@/lib/sizes";
 
 type Field = "name" | "phone" | "email" | "governorate" | "city" | "street";
 type Errors = Partial<Record<Field, string>>;
 
 const inputClass =
   "mt-2 w-full rounded-lg border border-white/15 bg-[#0b0b0b] px-4 py-3 text-white placeholder:text-white/30 focus:border-gold-400 focus:outline-none aria-[invalid=true]:border-red-400";
+
+const radioClass = "mt-1 size-5 shrink-0 accent-[#d9ad45]";
+const paymentCard = (active: boolean) =>
+  `block cursor-pointer rounded-xl border p-5 transition ${
+    active ? "border-gold-400 bg-gold-400/10" : "border-white/15 hover:border-white/40"
+  } [&:is(label)]:flex [&:is(label)]:items-start [&:is(label)]:gap-4`;
 
 function validate(values: Record<string, string>, t: Dictionary["checkout"]["errors"]): Errors {
   const errors: Errors = {};
@@ -35,6 +42,8 @@ export function CheckoutForm() {
   const [values, setValues] = useState({ name: "", phone: "", email: "", governorate: "", city: "", street: "", notes: "", company: "" });
   const [errors, setErrors] = useState<Errors>({});
   const [status, setStatus] = useState<"idle" | "sending" | "error" | "notConfigured">("idle");
+  const [paymentMethod, setPaymentMethod] = useState<PaymentMethod>("cod");
+  const [onlineMethod, setOnlineMethod] = useState<OnlineMethod>("card");
 
   const totals = calculateTotals(items, values.governorate || undefined);
   const set = (field: keyof typeof values) => (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement | HTMLTextAreaElement>) => {
@@ -56,11 +65,18 @@ export function CheckoutForm() {
       const res = await fetch("/api/orders", {
         method: "POST",
         headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ ...values, locale, items, paymentMethod: "cod" }),
+        body: JSON.stringify({
+          ...values,
+          locale,
+          items,
+          paymentMethod,
+          onlineMethod: paymentMethod === "online" ? onlineMethod : undefined,
+        }),
       });
       const data = await res.json();
       if (res.ok && data.orderNumber) {
-        router.push(`/${locale}/checkout/success?order=${encodeURIComponent(data.orderNumber)}&total=${data.total}`);
+        const pay = paymentMethod === "online" ? `&pay=online&method=${onlineMethod}` : "";
+        router.push(`/${locale}/checkout/success?order=${encodeURIComponent(data.orderNumber)}&total=${data.total}${pay}`);
         return;
       }
       if (data.error === "invalid" && data.field && data.field !== "items" && data.field !== "payment") {
@@ -180,18 +196,72 @@ export function CheckoutForm() {
             </div>
           </section>
 
-          <section>
-            <h2 className="text-sm font-semibold uppercase tracking-wider text-gold-300">{t.checkout.payment}</h2>
-            <div className="mt-4 flex items-start gap-4 rounded-xl border border-gold-400 bg-gold-400/10 p-5">
-              <span className="mt-0.5 flex size-6 shrink-0 items-center justify-center rounded-full bg-gold-400 text-black">
-                <CheckIcon className="size-4" />
-              </span>
-              <div>
-                <p className="font-semibold">{t.checkout.cod}</p>
-                <p className="mt-1 text-sm text-white/70">{t.checkout.codText}</p>
+          <fieldset>
+            <legend className="text-sm font-semibold uppercase tracking-wider text-gold-300">{t.checkout.payment}</legend>
+            <div className="mt-4 space-y-3">
+              <label className={paymentCard(paymentMethod === "cod")}>
+                <input
+                  type="radio"
+                  name="paymentMethod"
+                  value="cod"
+                  checked={paymentMethod === "cod"}
+                  onChange={() => setPaymentMethod("cod")}
+                  className={radioClass}
+                />
+                <span>
+                  <span className="block font-semibold">{t.checkout.cod}</span>
+                  <span className="mt-1 block text-sm text-white/70">{t.checkout.codText}</span>
+                </span>
+              </label>
+
+              <div className={paymentCard(paymentMethod === "online")}>
+                <label className="flex cursor-pointer items-start gap-4">
+                  <input
+                    type="radio"
+                    name="paymentMethod"
+                    value="online"
+                    checked={paymentMethod === "online"}
+                    onChange={() => setPaymentMethod("online")}
+                    className={radioClass}
+                  />
+                  <span>
+                    <span className="block font-semibold">{t.checkout.online}</span>
+                    <span className="mt-1 block text-sm text-white/70">{t.checkout.onlineText}</span>
+                  </span>
+                </label>
+
+                {paymentMethod === "online" && (
+                  <div className="mt-4 ps-10">
+                    <ul role="radiogroup" aria-label={t.checkout.online} className="space-y-2">
+                      {ONLINE_METHODS.map((m) => (
+                        <li key={m}>
+                          <label
+                            className={`flex cursor-pointer items-center gap-3 rounded-lg border px-4 py-3 transition ${
+                              onlineMethod === m ? "border-gold-400 bg-black/40" : "border-white/15 hover:border-white/40"
+                            }`}
+                          >
+                            <input
+                              type="radio"
+                              name="onlineMethod"
+                              value={m}
+                              checked={onlineMethod === m}
+                              onChange={() => setOnlineMethod(m)}
+                              className="size-4 shrink-0 accent-[#d9ad45]"
+                            />
+                            <span className="font-medium">{t.checkout.onlineMethods[m].title}</span>
+                            <span className="text-sm text-white/50">· {t.checkout.onlineMethods[m].text}</span>
+                          </label>
+                        </li>
+                      ))}
+                    </ul>
+                    <p className="mt-4 text-sm text-gold-200">
+                      {values.email.trim() ? t.checkout.onlineNoteWithEmail : t.checkout.onlineNote}
+                    </p>
+                  </div>
+                )}
               </div>
             </div>
-          </section>
+          </fieldset>
         </div>
 
         <aside className="h-fit rounded-2xl border border-white/10 bg-[#0a0a0a] p-6 lg:sticky lg:top-32">
@@ -206,7 +276,7 @@ export function CheckoutForm() {
                   <span>
                     {product.name[locale]} × {item.quantity}
                     <span className="block text-white/50">
-                      {color.name[locale]} · {t.fits[item.fit]} · EU {item.size}
+                      {color.name[locale]} · {t.fits[item.fit]} · {sizeLabel(item.size)}
                     </span>
                   </span>
                   <span className="shrink-0">{formatPrice(product.price * item.quantity, locale)}</span>

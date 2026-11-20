@@ -1,8 +1,8 @@
-import "server-only";
 import { formatPrice } from "./products";
 import type { Order } from "./orders";
 import { sizeLabel } from "./sizes";
 import { ONLINE_METHOD_NAMES } from "./config";
+import { env } from "./env";
 
 /*
  * Emails are sent with Resend (https://resend.com).
@@ -11,22 +11,22 @@ import { ONLINE_METHOD_NAMES } from "./config";
  *   ORDER_EMAIL_FROM – sender; until your domain is verified in Resend, keep the default
  *   SEND_CUSTOMER_EMAILS=true – also email the customer (needs a verified domain)
  */
-const RESEND_URL = process.env.RESEND_API_URL ?? "https://api.resend.com/emails";
+const resendUrl = () => env("RESEND_API_URL") ?? "https://api.resend.com/emails";
 const DEFAULT_FROM = "Fast Suit <onboarding@resend.dev>";
 
 export function emailConfigured() {
-  return Boolean(process.env.RESEND_API_KEY && process.env.ORDER_EMAIL_TO);
+  return Boolean(env("RESEND_API_KEY") && env("ORDER_EMAIL_TO"));
 }
 
 async function sendEmail(message: { to: string[]; subject: string; html: string; replyTo?: string }) {
-  const res = await fetch(RESEND_URL, {
+  const res = await fetch(resendUrl(), {
     method: "POST",
     headers: {
-      Authorization: `Bearer ${process.env.RESEND_API_KEY}`,
+      Authorization: `Bearer ${env("RESEND_API_KEY")}`,
       "Content-Type": "application/json",
     },
     body: JSON.stringify({
-      from: process.env.ORDER_EMAIL_FROM || DEFAULT_FROM,
+      from: env("ORDER_EMAIL_FROM") || DEFAULT_FROM,
       to: message.to,
       subject: message.subject,
       html: message.html,
@@ -102,7 +102,7 @@ export async function sendOrderToShop(order: Order) {
   </div>`;
 
   await sendEmail({
-    to: process.env.ORDER_EMAIL_TO!.split(",").map((s) => s.trim()).filter(Boolean),
+    to: env("ORDER_EMAIL_TO")!.split(",").map((s) => s.trim()).filter(Boolean),
     subject: `${online ? "PAY ONLINE – " : ""}New order ${order.number} – ${egp(order.total)} – ${a.governorate}${
       online && order.onlineMethod ? ` – ${ONLINE_METHOD_NAMES[order.onlineMethod]}` : ""
     }`,
@@ -112,7 +112,7 @@ export async function sendOrderToShop(order: Order) {
 }
 
 export async function sendConfirmationToCustomer(order: Order) {
-  if (!order.customer.email || process.env.SEND_CUSTOMER_EMAILS !== "true") return;
+  if (!order.customer.email || env("SEND_CUSTOMER_EMAILS") !== "true") return;
   const ar = order.locale === "ar";
   const html = `<div dir="${ar ? "rtl" : "ltr"}" style="font-family:Arial,sans-serif;max-width:640px;color:#111">
     <h2>${ar ? "شكراً على طلبك من فاست سوت!" : "Thank you for your Fast Suit order!"}</h2>

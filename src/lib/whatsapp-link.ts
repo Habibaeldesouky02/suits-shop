@@ -1,4 +1,3 @@
-import "server-only";
 import type { Locale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
 import { ONLINE_METHOD_NAMES } from "./config";
@@ -6,6 +5,7 @@ import { getGovernorate } from "./egypt";
 import type { Order } from "./orders";
 import { formatPrice, getProduct } from "./products";
 import { sizeLabel } from "./sizes";
+import { env } from "./env";
 
 /*
  * "Send order on WhatsApp": after ordering, the customer gets a button that opens
@@ -13,7 +13,7 @@ import { sizeLabel } from "./sizes";
  *   SHOP_WHATSAPP_NUMBER – the shop's WhatsApp number, e.g. 201001234567 or 01001234567
  */
 export function shopWhatsAppNumber() {
-  const raw = process.env.SHOP_WHATSAPP_NUMBER;
+  const raw = env("SHOP_WHATSAPP_NUMBER");
   if (!raw) return null;
   const digits = raw.replace(/\D/g, "");
   if (digits.startsWith("00")) return digits.slice(2);

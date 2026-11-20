@@ -2,7 +2,7 @@
 
 A bilingual (Arabic / English) web shop for suits. Customers browse the collection, pick colour, fit and size, and order with **cash on delivery** anywhere in Egypt. Every order is emailed to the shop.
 
-**Stack:** Next.js 16 (App Router) · React 19 · TypeScript · Tailwind CSS 4 · WhatsApp (Whatabot / CallMeBot) / Resend (email)
+**Stack:** Next.js 16 (App Router, static export) · React 19 · TypeScript · Tailwind CSS 4 · Cloudflare Workers · WhatsApp (Whatabot / CallMeBot) / Resend (email)
 
 ## Features
 
@@ -16,7 +16,7 @@ A bilingual (Arabic / English) web shop for suits. Customers browse the collecti
 - After ordering, the customer sends the order to your WhatsApp with one tap (message already typed)
 - Each order can also be sent to you automatically by WhatsApp bot and/or email
 - Prices and delivery fees are always calculated on the server, so customers can't change them
-- Every order is also written to the server logs as a backup (Vercel → your project → Logs, search for `NEW ORDER`)
+- Every order is also written to the server logs as a backup (Cloudflare → your Worker → **Logs**, search for `NEW ORDER`)
 
 ## Run it locally
 
@@ -31,11 +31,11 @@ Open http://localhost:3000.
 
 ## Customers send their order to your WhatsApp (simplest, free)
 
-Set `SHOP_WHATSAPP_NUMBER` in Vercel (your WhatsApp number in international format, e.g. `491701234567` or `201001234567`) and redeploy.
+Set `SHOP_WHATSAPP_NUMBER` in Cloudflare (your WhatsApp number in international format, e.g. `491701234567` or `201001234567`) and redeploy.
 
 After ordering, the thank-you page shows **"Last step: send us your order on WhatsApp"** with a big green button. It opens WhatsApp with your number and the full order already typed (order number, suits, sizes, total, payment method, name, mobile and address, in the customer's language). The customer just presses Send, and you can reply in that chat to confirm or send a payment link.
 
-If a customer doesn't press Send, you still get the order through any channel below that is set up (email recommended as a backup), and in Vercel → Logs (`NEW ORDER`).
+If a customer doesn't press Send, you still get the order through any channel below that is set up (email recommended as a backup), and in Cloudflare → your Worker → Logs (`NEW ORDER`).
 
 ## Receive orders on WhatsApp automatically
 
@@ -45,10 +45,10 @@ Every order is sent to your own WhatsApp number with a free service that can onl
 
 1. On [whatabot.io](https://whatabot.io) → **Get Started**, save the Whatabot phone number shown there as a contact.
 2. Send it the activation message shown on that page and wait for the reply with your **API key**.
-3. In Vercel: your project → **Settings → Environment Variables**, add:
+3. In Cloudflare: your Worker → **Settings → Variables and Secrets**, add:
    - `WHATABOT_PHONE` = your WhatsApp number, e.g. `201001234567`
    - `WHATABOT_APIKEY` = the key from the bot
-4. **Deployments → ⋯ → Redeploy**, then place a test order.
+4. Settings take effect immediately for new orders; place a test order.
 
 Whatabot allows 200 characters per message, so each order arrives as a few short messages in a row, each marked like `(2/4 · FS-261119-AB12)`.
 
@@ -56,7 +56,7 @@ Whatabot allows 200 characters per message, so each order arrives as a few short
 
 1. On callmebot.com → **WhatsApp**, save the bot's phone number (when it is accepting new users).
 2. Send it: `I allow callmebot to send me messages` and wait for your **API key**.
-3. In Vercel add `CALLMEBOT_PHONE` (e.g. `+201001234567`) and `CALLMEBOT_APIKEY`, then redeploy.
+3. In Cloudflare add `CALLMEBOT_PHONE` (e.g. `+201001234567`) and `CALLMEBOT_APIKEY`, then redeploy.
 
 If both are set up, Whatabot is used.
 
@@ -64,7 +64,29 @@ If both are set up, Whatabot is used.
 
 Add `RESEND_API_KEY` and `ORDER_EMAIL_TO` (see `.env.example`) to get every order by email too. If both WhatsApp and email are set up, an order counts as received when at least one of them arrives. To stop emails, delete those two variables and redeploy.
 
-Every order is also written to the server logs as a backup: Vercel → your project → **Logs**, search for `NEW ORDER`.
+Every order is also written to the logs as a backup: Cloudflare → your Worker → **Logs**, search for `NEW ORDER`.
+
+## Hosting (Cloudflare, free plan)
+
+The website is built as plain files (`npm run build` → `out/`) and served by Cloudflare. A small Cloudflare Worker (`worker/index.ts`) handles the rest:
+
+- `POST /api/orders` – receives orders and sends them by email / WhatsApp (`src/lib/handle-order.ts`)
+- addresses without a language (`/`, `/shop`, …) – redirects to `/ar/…` or `/en/…` (saved choice → browser language → Arabic)
+- unknown pages – shows the "page not found" page
+
+Cloudflare settings for the GitHub-connected Worker (**Settings → Build**):
+
+| Setting | Value |
+| --- | --- |
+| Build command | `npm run build` |
+| Deploy command | `npx wrangler deploy` |
+| Root directory | `/` |
+
+The Worker's name in Cloudflare must match `"name"` in `wrangler.jsonc` (`fastsuit`). Every push to GitHub deploys automatically.
+
+Settings (API keys, phone numbers) go in your Worker → **Settings → Variables and Secrets**. Use the type **Secret** for keys.
+
+To try it locally on the Cloudflare runtime: put the settings in a `.dev.vars` file (same format as `.env.example`) and run `npm run preview`.
 
 ## Edit the shop
 
@@ -116,11 +138,14 @@ src/
       checkout/success/  thank-you page with order number
       size-guide/
       legal/[page]/      imprint, privacy, terms, returns
-    api/orders/          receives orders and emails them
+      404/               "page not found" page
   components/            header, footer, product card, cart, checkout form, …
   i18n/                  languages and translations
-  lib/                   products, shop settings, governorates, pricing, orders, email
-  proxy.ts               sends visitors to /ar or /en
+  lib/                   products, shop settings, governorates, pricing, orders,
+                         email, WhatsApp, handle-order (the order endpoint)
+worker/
+  index.ts               Cloudflare Worker: /api/orders, language redirect, 404
+wrangler.jsonc           Cloudflare settings
 ```
 
 ## Before you sell for real

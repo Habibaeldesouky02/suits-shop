@@ -1,0 +1,16 @@
+{
+  "$schema": "node_modules/wrangler/config-schema.json",
+  "name": "fastsuit",
+  "main": "worker/index.ts",
+  "compatibility_date": "2026-11-01",
+  // The website files, built by `npm run build`
+  "assets": {
+    "directory": "./out",
+    "binding": "ASSETS",
+    "html_handling": "auto-trailing-slash",
+    "not_found_handling": "none"
+  },
+  // Keep the settings (API keys, phone numbers) you add in the Cloudflare dashboard
+  "keep_vars": true,
+  "observability": { "enabled": true }
+}

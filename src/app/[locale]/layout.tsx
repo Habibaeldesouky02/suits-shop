@@ -20,7 +20,7 @@ export async function generateMetadata({ params }: LayoutProps<"/[locale]">): Pr
   if (!isLocale(locale)) return {};
   const t = getDictionary(locale);
   return {
-    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "http://localhost:3000"),
+    metadataBase: new URL(process.env.NEXT_PUBLIC_SITE_URL ?? "https://fastsuit.com.eg"),
     title: { default: t.meta.title, template: "%s · Fast Suit" },
     description: t.meta.description,
     alternates: { languages: { en: "/en", ar: "/ar" } },

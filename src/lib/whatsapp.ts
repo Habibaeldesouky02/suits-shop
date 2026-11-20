@@ -1,8 +1,8 @@
-import "server-only";
 import { ONLINE_METHOD_NAMES } from "./config";
 import type { Order } from "./orders";
 import { formatPrice } from "./products";
 import { sizeLabel } from "./sizes";
+import { env } from "./env";
 
 /*
  * Sends each new order to the shop owner's own WhatsApp, using one of two free
@@ -16,13 +16,13 @@ import { sizeLabel } from "./sizes";
  *   CALLMEBOT_PHONE  – your WhatsApp number, e.g. +201001234567 (01001234567 also works)
  *   CALLMEBOT_APIKEY – the API key the CallMeBot bot sent you on WhatsApp
  */
-const WHATABOT_URL = process.env.WHATABOT_API_URL ?? "https://api.whatabot.io/Whatsapp/RequestSendMessage";
-const CALLMEBOT_URL = process.env.CALLMEBOT_API_URL ?? "https://api.callmebot.com/whatsapp.php";
+const whatabotUrl = () => env("WHATABOT_API_URL") ?? "https://api.whatabot.io/Whatsapp/RequestSendMessage";
+const callMeBotUrl = () => env("CALLMEBOT_API_URL") ?? "https://api.callmebot.com/whatsapp.php";
 /** Whatabot accepts at most 200 characters per message. */
 const WHATABOT_MAX_LENGTH = 200;
 
-const whatabotEnabled = () => Boolean(process.env.WHATABOT_PHONE && process.env.WHATABOT_APIKEY);
-const callMeBotEnabled = () => Boolean(process.env.CALLMEBOT_PHONE && process.env.CALLMEBOT_APIKEY);
+const whatabotEnabled = () => Boolean(env("WHATABOT_PHONE") && env("WHATABOT_APIKEY"));
+const callMeBotEnabled = () => Boolean(env("CALLMEBOT_PHONE") && env("CALLMEBOT_APIKEY"));
 
 export function whatsappConfigured() {
   return whatabotEnabled() || callMeBotEnabled();
@@ -82,13 +82,13 @@ export function packMessages(lines: string[], max: number) {
 }
 
 async function sendWithWhatabot(text: string) {
-  const res = await fetch(WHATABOT_URL, {
+  const res = await fetch(whatabotUrl(), {
     method: "POST",
     headers: { "Content-Type": "application/json" },
     body: JSON.stringify({
-      ApiKey: process.env.WHATABOT_APIKEY,
+      ApiKey: env("WHATABOT_APIKEY"),
       Text: text,
-      Phone: internationalDigits(process.env.WHATABOT_PHONE!),
+      Phone: internationalDigits(env("WHATABOT_PHONE")!),
     }),
     signal: AbortSignal.timeout(20000),
   });
@@ -98,9 +98,9 @@ async function sendWithWhatabot(text: string) {
 }
 
 async function sendWithCallMeBot(text: string) {
-  const url = new URL(CALLMEBOT_URL);
-  url.searchParams.set("phone", `+${internationalDigits(process.env.CALLMEBOT_PHONE!)}`);
-  url.searchParams.set("apikey", process.env.CALLMEBOT_APIKEY!);
+  const url = new URL(callMeBotUrl());
+  url.searchParams.set("phone", `+${internationalDigits(env("CALLMEBOT_PHONE")!)}`);
+  url.searchParams.set("apikey", env("CALLMEBOT_APIKEY")!);
   url.searchParams.set("text", text);
   const res = await fetch(url, { signal: AbortSignal.timeout(20000) });
   const body = await res.text();

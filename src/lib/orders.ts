@@ -1,5 +1,3 @@
-import "server-only";
-import { randomInt } from "node:crypto";
 import { isLocale, type Locale } from "@/i18n/config";
 import {
   FITS,
@@ -53,7 +51,8 @@ function orderNumber() {
   const now = new Date();
   const date = `${String(now.getUTCFullYear()).slice(2)}${String(now.getUTCMonth() + 1).padStart(2, "0")}${String(now.getUTCDate()).padStart(2, "0")}`;
   const chars = "ABCDEFGHJKLMNPQRSTUVWXYZ23456789"; // no 0/O or 1/I to avoid confusion on the phone
-  const code = Array.from({ length: 4 }, () => chars[randomInt(chars.length)]).join("");
+  const random = crypto.getRandomValues(new Uint32Array(4));
+  const code = Array.from(random, (n) => chars[n % chars.length]).join("");
   return `FS-${date}-${code}`;
 }
 

@@ -36,12 +36,15 @@ function orderText(order: Order, locale: Locale) {
     return `• ${name} – ${color}، ${t.fits[i.fit]}، ${ar ? "مقاس" : "size"} ${sizeLabel(i.size)} × ${i.quantity} = ${price(i.lineTotal)}`;
   });
 
+  const method = ar ? t.checkout.onlineMethods[order.onlineMethod].title : ONLINE_METHOD_NAMES[order.onlineMethod];
   const payment =
-    order.paymentMethod === "online" && order.onlineMethod
+    order.paymentMethod === "online"
       ? ar
-        ? `${t.checkout.online} – ${t.checkout.onlineMethods[order.onlineMethod].title} (ابعتولي لينك الدفع لو سمحت)`
-        : `${t.checkout.online} – ${ONLINE_METHOD_NAMES[order.onlineMethod]} (please send me the payment link)`
-      : t.checkout.cod;
+        ? `${t.checkout.online} – ${method} (ابعتولي لينك الدفع لو سمحت)`
+        : `${t.checkout.online} – ${method} (please send me the payment link)`
+      : ar
+        ? `${t.checkout.cod} – عربون ${price(order.payOnline)} أونلاين بـ${method} (ابعتولي لينك الدفع لو سمحت)، والباقي ${price(order.payOnDelivery)} كاش`
+        : `${t.checkout.cod} – deposit ${price(order.payOnline)} online via ${method} (please send me the payment link), rest ${price(order.payOnDelivery)} in cash`;
 
   const lines = ar
     ? [

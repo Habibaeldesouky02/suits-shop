@@ -42,12 +42,12 @@ const egp = (piasters: number) => formatPrice(piasters, "en");
 export function orderLines(order: Order) {
   const c = order.customer;
   const a = order.address;
-  const online = order.paymentMethod === "online" && order.onlineMethod;
+  const method = ONLINE_METHOD_NAMES[order.onlineMethod];
   return [
     `🛍️ *New order ${order.number}* – ${egp(order.total)}`,
-    online
-      ? `💳 *PAY ONLINE – ${ONLINE_METHOD_NAMES[order.onlineMethod!]}*. Send a payment link for ${egp(order.total)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}`
-      : `💵 Cash on delivery`,
+    order.paymentMethod === "online"
+      ? `💳 *PAY ONLINE – ${method}*. Send a payment link for ${egp(order.payOnline)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}`
+      : `💵 *COD + DEPOSIT – ${method}*. Send a deposit link for ${egp(order.payOnline)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}. Cash on delivery: ${egp(order.payOnDelivery)}`,
     `👤 ${c.name}`,
     `📱 ${c.phone}  wa.me/2${c.phone}`,
     ...(c.email ? [`✉️ ${c.email}`] : []),

@@ -37,7 +37,9 @@ export function CheckoutSuccess() {
   const total = Number(params.get("total"));
   const methodParam = params.get("method");
   const onlineMethod = ONLINE_METHODS.find((m) => m === methodParam) as OnlineMethod | undefined;
-  const online = params.get("pay") === "online" && Boolean(onlineMethod);
+  const online = params.get("pay") === "online";
+  const payNow = Number(params.get("now")) || 0;
+  const payLater = Number(params.get("later")) || 0;
   const whatsappUrl = useWhatsAppLink(orderNumber);
 
   // The order has been sent, so empty the cart (once it has loaded).
@@ -68,7 +70,11 @@ export function CheckoutSuccess() {
           </a>
         </div>
       ) : (
-        <p className="mt-4 text-white/70">{online ? fill(t.success.textOnline, { method: methodName }) : t.success.text}</p>
+        <p className="mt-4 text-white/70">
+          {!onlineMethod
+            ? t.success.text
+            : fill(online ? t.success.textOnline : t.success.textCodDeposit, { method: methodName })}
+        </p>
       )}
       {orderNumber && (
         <dl className="mx-auto mt-8 max-w-sm space-y-3 rounded-2xl border border-white/10 bg-[#0a0a0a] p-6 text-sm">
@@ -80,13 +86,31 @@ export function CheckoutSuccess() {
           </div>
           <div className="flex justify-between gap-4">
             <dt className="text-white/60">{t.success.paymentMethod}</dt>
-            <dd className="font-semibold">{online ? `${t.checkout.online} · ${methodName}` : t.checkout.cod}</dd>
+            <dd className="font-semibold">
+              {online ? t.checkout.online : t.success.codWithDeposit}
+              {methodName && ` · ${methodName}`}
+            </dd>
           </div>
-          {total > 0 && (
-            <div className="flex justify-between gap-4">
-              <dt className="text-white/60">{online ? t.success.amountOnline : t.success.amountDue}</dt>
-              <dd className="font-semibold">{formatPrice(total, locale)}</dd>
-            </div>
+          {payNow > 0 ? (
+            <>
+              <div className="flex justify-between gap-4">
+                <dt className="text-white/60">{online ? t.success.amountOnline : t.success.depositAmount}</dt>
+                <dd className="font-semibold text-gold-300">{formatPrice(payNow, locale)}</dd>
+              </div>
+              {payLater > 0 && (
+                <div className="flex justify-between gap-4">
+                  <dt className="text-white/60">{t.success.restAmount}</dt>
+                  <dd className="font-semibold">{formatPrice(payLater, locale)}</dd>
+                </div>
+              )}
+            </>
+          ) : (
+            total > 0 && (
+              <div className="flex justify-between gap-4">
+                <dt className="text-white/60">{t.success.amountDue}</dt>
+                <dd className="font-semibold">{formatPrice(total, locale)}</dd>
+              </div>
+            )
           )}
         </dl>
       )}

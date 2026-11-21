@@ -14,15 +14,18 @@ export const SHOP = {
     upper: 12000, // Upper Egypt, Red Sea, Sinai, Matrouh, New Valley
   },
   maxQuantityPerItem: 10,
+  /** Cash on delivery: share of the total the customer pays online first as a deposit. */
+  codDepositPercent: 10,
 } as const;
 
 export type ShippingZone = keyof typeof SHOP.shippingByZone;
 
 /**
  * How customers can pay:
- *   cod    – cash on delivery
- *   online – the shop sends a payment link (SMS / email); the customer pays
- *            with one of ONLINE_METHODS on the payment page
+ *   cod    – cash on delivery, after a deposit (SHOP.codDepositPercent) paid online
+ *   online – everything paid online
+ * Online amounts (the deposit or the full total) are paid via a payment link the shop
+ * sends by SMS / email; the customer pays with one of ONLINE_METHODS.
  */
 export const PAYMENT_METHODS = ["cod", "online"] as const;
 export type PaymentMethod = (typeof PAYMENT_METHODS)[number];

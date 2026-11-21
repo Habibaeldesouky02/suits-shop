@@ -65,5 +65,11 @@ export async function handleOrderRequest(request: Request): Promise<Response> {
     }
   }
 
-  return Response.json({ orderNumber: order.number, total: order.total, whatsappUrl: orderWhatsAppLink(order) });
+  return Response.json({
+    orderNumber: order.number,
+    total: order.total,
+    payOnline: order.payOnline,
+    payOnDelivery: order.payOnDelivery,
+    whatsappUrl: orderWhatsAppLink(order),
+  });
 }

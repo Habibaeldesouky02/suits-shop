@@ -11,7 +11,7 @@ import {
   type Size,
 } from "./config";
 import { getGovernorate, normalizeEgyptianMobile } from "./egypt";
-import { calculateTotals } from "./pricing";
+import { calculateTotals, paymentSplit } from "./pricing";
 import { getProduct } from "./products";
 
 export type OrderItem = {
@@ -30,14 +30,18 @@ export type Order = {
   createdAt: string;
   locale: Locale;
   paymentMethod: PaymentMethod;
-  /** Set when paymentMethod is "online". */
-  onlineMethod?: OnlineMethod;
+  /** How the online part is paid: the full total ("online") or the deposit ("cod"). */
+  onlineMethod: OnlineMethod;
   customer: { name: string; phone: string; email?: string };
   address: { governorateId: string; governorate: string; governorateAr: string; city: string; street: string; notes?: string };
   items: OrderItem[];
   subtotal: number;
   shipping: number;
   total: number;
+  /** Paid online now (full total, or the deposit for cash on delivery). */
+  payOnline: number;
+  /** Paid in cash to the courier. */
+  payOnDelivery: number;
 };
 
 export type OrderField = "name" | "phone" | "email" | "governorate" | "city" | "street" | "items" | "payment";
@@ -89,7 +93,7 @@ export function parseOrder(body: Record<string, unknown>): ParseResult {
   const paymentMethod = PAYMENT_METHODS.find((m) => m === body.paymentMethod);
   if (!paymentMethod) return { error: "invalid", field: "payment" };
   const onlineMethod = ONLINE_METHODS.find((m) => m === body.onlineMethod);
-  if (paymentMethod === "online" && !onlineMethod) return { error: "invalid", field: "payment" };
+  if (!onlineMethod) return { error: "invalid", field: "payment" };
 
   const rawItems = Array.isArray(body.items) ? body.items : [];
   if (rawItems.length === 0 || rawItems.length > 30) return { error: "invalid", field: "items" };
@@ -124,7 +128,7 @@ export function parseOrder(body: Record<string, unknown>): ParseResult {
       createdAt: new Date().toISOString(),
       locale,
       paymentMethod,
-      onlineMethod: paymentMethod === "online" ? onlineMethod : undefined,
+      onlineMethod,
       customer: { name, phone, email: email || undefined },
       address: {
         governorateId: governorate.id,
@@ -138,6 +142,7 @@ export function parseOrder(body: Record<string, unknown>): ParseResult {
       subtotal: totals.subtotal,
       shipping: totals.shipping ?? 0,
       total: totals.total,
+      ...paymentSplit(totals.total, paymentMethod),
     },
   };
 }

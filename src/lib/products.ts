@@ -14,6 +14,12 @@ export type ProductColor = {
 
 export type Product = {
   id: string;
+  /**
+   * The product's own code, shown on its page and used instead of the name in
+   * the order messages you receive. Every product needs a different code.
+   */
+  code: string;
+  /** Last part of the product's link: <your site>/product/<slug> */
   slug: string;
   name: Localized;
   description: Localized;
@@ -41,6 +47,7 @@ const GOLD = "#d9ad45";
 export const products: Product[] = [
   {
     id: "midnight-classic",
+    code: "FS-101",
     slug: "midnight-classic",
     name: { en: "Midnight Classic", ar: "ميدنايت كلاسيك" },
     description: {
@@ -62,6 +69,7 @@ export const products: Product[] = [
   },
   {
     id: "gold-edge-tuxedo",
+    code: "FS-102",
     slug: "gold-edge-tuxedo",
     name: { en: "Gold Edge Tuxedo", ar: "توكسيدو جولد إيدج" },
     description: {
@@ -82,6 +90,7 @@ export const products: Product[] = [
   },
   {
     id: "navy-executive",
+    code: "FS-103",
     slug: "navy-executive",
     name: { en: "Navy Executive", ar: "نيفي إكزكيوتيف" },
     description: {
@@ -104,6 +113,7 @@ export const products: Product[] = [
   },
   {
     id: "charcoal-signature",
+    code: "FS-104",
     slug: "charcoal-signature",
     name: { en: "Charcoal Signature", ar: "تشاركول سيغنتشر" },
     description: {
@@ -122,6 +132,7 @@ export const products: Product[] = [
   },
   {
     id: "silver-light",
+    code: "FS-105",
     slug: "silver-light",
     name: { en: "Silver Light", ar: "سيلفر لايت" },
     description: {
@@ -140,6 +151,7 @@ export const products: Product[] = [
   },
   {
     id: "sand-linen",
+    code: "FS-106",
     slug: "sand-linen",
     name: { en: "Sand Linen", ar: "ساند لينن" },
     description: {
@@ -160,6 +172,7 @@ export const products: Product[] = [
   },
   {
     id: "burgundy-velvet",
+    code: "FS-107",
     slug: "burgundy-velvet",
     name: { en: "Burgundy Velvet", ar: "برغندي فيلفت" },
     description: {
@@ -178,6 +191,7 @@ export const products: Product[] = [
   },
   {
     id: "heritage-brown",
+    code: "FS-108",
     slug: "heritage-brown",
     name: { en: "Heritage Brown", ar: "هيريتج براون" },
     description: {
@@ -194,6 +208,11 @@ export const products: Product[] = [
     occasions: ["business"],
   },
 ];
+
+/** The product's own page, e.g. https://fastsuit.com.eg/product/midnight-classic (opens in the visitor's language). */
+export function productLink(product: Pick<Product, "slug">, siteUrl: string) {
+  return `${siteUrl.replace(/\/$/, "")}/product/${product.slug}`;
+}
 
 export function getProduct(slugOrId: string) {
   return products.find((p) => p.slug === slugOrId || p.id === slugOrId);

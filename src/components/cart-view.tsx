@@ -2,7 +2,7 @@
 
 import Link from "next/link";
 import { fill } from "@/i18n/config";
-import { SHOP } from "@/lib/config";
+import { COD_DEPOSIT, SHOP } from "@/lib/config";
 import { formatPrice, getProduct } from "@/lib/products";
 import { cartKey, useCart } from "./cart-provider";
 import { useI18n } from "./locale-provider";
@@ -104,7 +104,7 @@ export function CartView() {
           <Link href={`/${locale}/checkout`} className="btn-gold mt-6 w-full">
             {t.cart.checkout}
           </Link>
-          <p className="mt-4 text-center text-xs text-white/50">{t.cart.codNote}</p>
+          <p className="mt-4 text-center text-xs text-white/50">{COD_DEPOSIT ? t.cart.codNote : t.cart.codNoteNoDeposit}</p>
           <Link href={`/${locale}/shop`} className="mt-4 block text-center text-sm text-white/60 hover:text-gold-300">
             {t.cart.continue}
           </Link>

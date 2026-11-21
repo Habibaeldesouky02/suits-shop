@@ -42,21 +42,23 @@ const egp = (piasters: number) => formatPrice(piasters, "en");
 export function orderLines(order: Order) {
   const c = order.customer;
   const a = order.address;
-  const method = ONLINE_METHOD_NAMES[order.onlineMethod];
+  const method = order.onlineMethod ? ONLINE_METHOD_NAMES[order.onlineMethod] : "";
   return [
     `🛍️ *New order ${order.number}* – ${egp(order.total)}`,
     order.paymentMethod === "online"
       ? `💳 *PAY ONLINE – ${method}*. Send a payment link for ${egp(order.payOnline)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}`
-      : `💵 *COD + DEPOSIT – ${method}*. Send a deposit link for ${egp(order.payOnline)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}. Cash on delivery: ${egp(order.payOnDelivery)}`,
+      : order.payOnline === 0
+        ? `💵 Cash on delivery`
+        : `💵 *COD + DEPOSIT – ${method}*. Send a deposit link for ${egp(order.payOnline)} to ${c.phone}${c.email ? ` / ${c.email}` : ""}. Cash on delivery: ${egp(order.payOnDelivery)}`,
     `👤 ${c.name}`,
     `📱 ${c.phone}  wa.me/2${c.phone}`,
     ...(c.email ? [`✉️ ${c.email}`] : []),
     `📍 ${a.street}, ${a.city}, ${a.governorate}`,
     ...(a.notes ? [`📝 ${a.notes}`] : []),
-    ...order.items.map(
-      (i) =>
-        `• ${i.name} – ${i.color}, ${i.fit === "slim" ? "Slim" : "Regular"}, size ${sizeLabel(i.size)} × ${i.quantity} = ${egp(i.lineTotal)}`,
-    ),
+    ...order.items.flatMap((i) => [
+      `• *${i.code}* – ${i.color}, ${i.fit === "slim" ? "Slim" : "Regular"}, size ${sizeLabel(i.size)} × ${i.quantity} = ${egp(i.lineTotal)}`,
+      `   ${i.link}`,
+    ]),
     `Subtotal ${egp(order.subtotal)} · Delivery ${order.shipping === 0 ? "free" : egp(order.shipping)} · *Total ${egp(order.total)}*`,
   ];
 }

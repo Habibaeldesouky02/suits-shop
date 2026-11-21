@@ -31,18 +31,23 @@ function orderText(order: Order, locale: Locale) {
 
   const items = order.items.map((i) => {
     const product = getProduct(i.productId);
-    const name = product?.name[locale] ?? i.name;
     const color = product?.colors.find((col) => col.name.en === i.color)?.name[locale] ?? i.color;
-    return `• ${name} – ${color}، ${t.fits[i.fit]}، ${ar ? "مقاس" : "size"} ${sizeLabel(i.size)} × ${i.quantity} = ${price(i.lineTotal)}`;
+    return `• ${i.code} – ${color}، ${t.fits[i.fit]}، ${ar ? "مقاس" : "size"} ${sizeLabel(i.size)} × ${i.quantity} = ${price(i.lineTotal)}\n${i.link}`;
   });
 
-  const method = ar ? t.checkout.onlineMethods[order.onlineMethod].title : ONLINE_METHOD_NAMES[order.onlineMethod];
+  const method = !order.onlineMethod
+    ? ""
+    : ar
+      ? t.checkout.onlineMethods[order.onlineMethod].title
+      : ONLINE_METHOD_NAMES[order.onlineMethod];
   const payment =
     order.paymentMethod === "online"
       ? ar
         ? `${t.checkout.online} – ${method} (ابعتولي لينك الدفع لو سمحت)`
         : `${t.checkout.online} – ${method} (please send me the payment link)`
-      : ar
+      : order.payOnline === 0
+        ? t.checkout.cod
+        : ar
         ? `${t.checkout.cod} – عربون ${price(order.payOnline)} أونلاين بـ${method} (ابعتولي لينك الدفع لو سمحت)، والباقي ${price(order.payOnDelivery)} كاش`
         : `${t.checkout.cod} – deposit ${price(order.payOnline)} online via ${method} (please send me the payment link), rest ${price(order.payOnDelivery)} in cash`;
 

@@ -41,6 +41,12 @@ export function ProductPurchase({ product, children }: { product: Product; child
 
       <div>
         <h1 className="text-4xl font-bold sm:text-5xl">{product.name[locale]}</h1>
+        <p className="mt-2 text-sm text-white/50">
+          {t.product.code}:{" "}
+          <span className="font-mono font-semibold text-white/80" dir="ltr">
+            {product.code}
+          </span>
+        </p>
         <div className="mt-4 flex items-baseline gap-3">
           <span className="text-2xl font-semibold text-gold-300">{formatPrice(product.price, locale)}</span>
           {product.compareAtPrice && (

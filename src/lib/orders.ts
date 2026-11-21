@@ -1,5 +1,5 @@
 import { isLocale, type Locale } from "@/i18n/config";
-import {
+import { COD_DEPOSIT,
   FITS,
   ONLINE_METHODS,
   PAYMENT_METHODS,
@@ -12,10 +12,14 @@ import {
 } from "./config";
 import { getGovernorate, normalizeEgyptianMobile } from "./egypt";
 import { calculateTotals, paymentSplit } from "./pricing";
-import { getProduct } from "./products";
+import { getProduct, productLink } from "./products";
 
 export type OrderItem = {
   productId: string;
+  /** The product's own code, e.g. FS-101. */
+  code: string;
+  /** Link to the product's page. */
+  link: string;
   name: string;
   color: string;
   size: Size;
@@ -31,7 +35,8 @@ export type Order = {
   locale: Locale;
   paymentMethod: PaymentMethod;
   /** How the online part is paid: the full total ("online") or the deposit ("cod"). */
-  onlineMethod: OnlineMethod;
+  /** How the online part is paid; not set for cash on delivery without a deposit. */
+  onlineMethod?: OnlineMethod;
   customer: { name: string; phone: string; email?: string };
   address: { governorateId: string; governorate: string; governorateAr: string; city: string; street: string; notes?: string };
   items: OrderItem[];
@@ -64,7 +69,7 @@ function orderNumber() {
  * Checks everything the browser sent and builds the order.
  * Prices and delivery fees always come from the server, never from the browser.
  */
-export function parseOrder(body: Record<string, unknown>): ParseResult {
+export function parseOrder(body: Record<string, unknown>, siteUrl: string): ParseResult {
   // Hidden field that real customers never fill in; bots often do.
   if (text(body.company, 100)) return { error: "spam" };
 
@@ -92,8 +97,9 @@ export function parseOrder(body: Record<string, unknown>): ParseResult {
 
   const paymentMethod = PAYMENT_METHODS.find((m) => m === body.paymentMethod);
   if (!paymentMethod) return { error: "invalid", field: "payment" };
-  const onlineMethod = ONLINE_METHODS.find((m) => m === body.onlineMethod);
-  if (!onlineMethod) return { error: "invalid", field: "payment" };
+  const needsOnlineMethod = paymentMethod === "online" || COD_DEPOSIT;
+  const onlineMethod = needsOnlineMethod ? ONLINE_METHODS.find((m) => m === body.onlineMethod) : undefined;
+  if (needsOnlineMethod && !onlineMethod) return { error: "invalid", field: "payment" };
 
   const rawItems = Array.isArray(body.items) ? body.items : [];
   if (rawItems.length === 0 || rawItems.length > 30) return { error: "invalid", field: "items" };
@@ -110,6 +116,8 @@ export function parseOrder(body: Record<string, unknown>): ParseResult {
     }
     items.push({
       productId: product.id,
+      code: product.code,
+      link: productLink(product, siteUrl),
       name: product.name.en,
       color: color.name.en,
       size,

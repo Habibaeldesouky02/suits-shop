@@ -44,18 +44,20 @@ function escape(value: string) {
 
 const egp = (piasters: number) => formatPrice(piasters, "en");
 
+const methodName = (order: Order) => (order.onlineMethod ? ONLINE_METHOD_NAMES[order.onlineMethod] : "");
+
 function paymentName(order: Order) {
-  const method = ONLINE_METHOD_NAMES[order.onlineMethod];
-  return order.paymentMethod === "online"
-    ? `Online – ${method}`
-    : `Cash on delivery + ${SHOP.codDepositPercent}% deposit online (${method})`;
+  const method = methodName(order);
+  if (order.paymentMethod === "online") return `Online – ${method}`;
+  return order.payOnline > 0 ? `Cash on delivery + ${SHOP.codDepositPercent}% deposit online (${method})` : "Cash on delivery";
 }
 
-function itemsTable(order: Order) {
+/** forShop: the product code (linked to its page) instead of the name. */
+function itemsTable(order: Order, forShop: boolean) {
   const rows = order.items
     .map(
       (i) => `<tr>
-        <td style="padding:8px;border-bottom:1px solid #eee">${escape(i.name)}<br><span style="color:#666;font-size:13px">${escape(i.color)} · ${i.fit === "slim" ? "Slim" : "Regular"} fit · Size ${sizeLabel(i.size)}</span></td>
+        <td style="padding:8px;border-bottom:1px solid #eee"><a href="${escape(i.link)}" style="color:#9a7420;font-weight:bold">${escape(forShop ? i.code : i.name)}</a>${forShop ? "" : ` <span style="color:#666">(${escape(i.code)})</span>`}<br><span style="color:#666;font-size:13px">${escape(i.color)} · ${i.fit === "slim" ? "Slim" : "Regular"} fit · Size ${sizeLabel(i.size)}</span></td>
         <td style="padding:8px;border-bottom:1px solid #eee;text-align:center">${i.quantity}</td>
         <td style="padding:8px;border-bottom:1px solid #eee;text-align:right">${egp(i.lineTotal)}</td>
       </tr>`,
@@ -67,7 +69,7 @@ function itemsTable(order: Order) {
     <tr><td colspan="2" style="padding:8px;text-align:right">Subtotal</td><td style="padding:8px;text-align:right">${egp(order.subtotal)}</td></tr>
     <tr><td colspan="2" style="padding:8px;text-align:right">Delivery</td><td style="padding:8px;text-align:right">${order.shipping === 0 ? "Free" : egp(order.shipping)}</td></tr>
     <tr><td colspan="2" style="padding:8px;text-align:right;font-weight:bold">Total</td><td style="padding:8px;text-align:right;font-weight:bold">${egp(order.total)}</td></tr>
-    <tr><td colspan="2" style="padding:8px;text-align:right">${order.paymentMethod === "online" ? "Pay online" : `Deposit online (${SHOP.codDepositPercent}%)`}</td><td style="padding:8px;text-align:right">${egp(order.payOnline)}</td></tr>
+    ${order.payOnline > 0 ? `<tr><td colspan="2" style="padding:8px;text-align:right">${order.paymentMethod === "online" ? "Pay online" : `Deposit online (${SHOP.codDepositPercent}%)`}</td><td style="padding:8px;text-align:right">${egp(order.payOnline)}</td></tr>` : ""}
     ${order.payOnDelivery > 0 ? `<tr><td colspan="2" style="padding:8px;text-align:right">Cash on delivery</td><td style="padding:8px;text-align:right">${egp(order.payOnDelivery)}</td></tr>` : ""}
   </table>`;
 }
@@ -76,8 +78,8 @@ export async function sendOrderToShop(order: Order) {
   const c = order.customer;
   const a = order.address;
   const online = order.paymentMethod === "online";
-  const method = ONLINE_METHOD_NAMES[order.onlineMethod];
-  const action = `<div style="margin:0 0 20px;padding:14px 16px;background:#fff4d6;border:2px solid #d9ad45;border-radius:8px;line-height:1.6">
+  const method = methodName(order);
+  const action = order.payOnline === 0 ? "" : `<div style="margin:0 0 20px;padding:14px 16px;background:#fff4d6;border:2px solid #d9ad45;border-radius:8px;line-height:1.6">
       <b>Action needed: send a payment link${online ? "" : " for the deposit"}</b><br>
       Amount: <b>${egp(order.payOnline)}</b>${online ? "" : ` (${SHOP.codDepositPercent}% deposit)`} · Method chosen: <b>${escape(method)}</b><br>
       Send it by SMS to <b>${c.phone}</b>${c.email ? ` and by email to <b>${escape(c.email)}</b>` : ""}.<br>
@@ -101,12 +103,12 @@ export async function sendOrderToShop(order: Order) {
       ${escape(a.city)}, ${escape(a.governorate)} (${escape(a.governorateAr)})
       ${a.notes ? `<br><i>Notes: ${escape(a.notes)}</i>` : ""}
     </p>
-    ${itemsTable(order)}
+    ${itemsTable(order, true)}
   </div>`;
 
   await sendEmail({
     to: env("ORDER_EMAIL_TO")!.split(",").map((s) => s.trim()).filter(Boolean),
-    subject: `${online ? "PAY ONLINE" : `COD + DEPOSIT ${egp(order.payOnline)}`} – New order ${order.number} – ${egp(order.total)} – ${a.governorate} – ${method}`,
+    subject: `${online ? "PAY ONLINE – " : order.payOnline > 0 ? `COD + DEPOSIT ${egp(order.payOnline)} – ` : ""}New order ${order.number} – ${egp(order.total)} – ${a.governorate}${method ? ` – ${method}` : ""}`,
     html,
     replyTo: c.email,
   });
@@ -122,11 +124,15 @@ export async function sendConfirmationToCustomer(order: Order) {
         ? ar
           ? `رقم طلبك <b>${escape(order.number)}</b>. هنبعتلك لينك الدفع قريب. المطلوب تدفعه أونلاين: <b>${formatPrice(order.payOnline, "ar")}</b>.`
           : `Your order number is <b>${escape(order.number)}</b>. We'll send you a payment link shortly. Amount to pay online: <b>${egp(order.payOnline)}</b>.`
+        : order.payOnline === 0
+          ? ar
+            ? `رقم طلبك <b>${escape(order.number)}</b>. هنكلمك قريب عشان نأكد الطلب. المطلوب تدفعه عند الاستلام: <b>${formatPrice(order.total, "ar")}</b>.`
+            : `Your order number is <b>${escape(order.number)}</b>. We'll call you shortly to confirm it. Amount to pay on delivery: <b>${egp(order.total)}</b>.`
         : ar
           ? `رقم طلبك <b>${escape(order.number)}</b>. هنبعتلك لينك دفع العربون قريب. العربون: <b>${formatPrice(order.payOnline, "ar")}</b>، والباقي كاش عند الاستلام: <b>${formatPrice(order.payOnDelivery, "ar")}</b>.`
           : `Your order number is <b>${escape(order.number)}</b>. We'll send you a payment link for the deposit shortly. Deposit: <b>${egp(order.payOnline)}</b>, rest in cash on delivery: <b>${egp(order.payOnDelivery)}</b>.`
     }</p>
-    <div dir="ltr">${itemsTable(order)}</div>
+    <div dir="ltr">${itemsTable(order, false)}</div>
   </div>`;
   await sendEmail({
     to: [order.customer.email],

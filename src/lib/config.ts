@@ -14,9 +14,15 @@ export const SHOP = {
     upper: 12000, // Upper Egypt, Red Sea, Sinai, Matrouh, New Valley
   },
   maxQuantityPerItem: 10,
-  /** Cash on delivery: share of the total the customer pays online first as a deposit. */
-  codDepositPercent: 10,
+  /**
+   * Cash on delivery: share of the total the customer pays online first as a deposit.
+   * 0 = no deposit (everything is paid in cash on delivery). Set it to 10 to turn the 10% deposit on.
+   */
+  codDepositPercent: 0 as number,
 } as const;
+
+/** Whether cash-on-delivery orders need a deposit paid online first. */
+export const COD_DEPOSIT = SHOP.codDepositPercent > 0;
 
 export type ShippingZone = keyof typeof SHOP.shippingByZone;
 

@@ -26,7 +26,7 @@ const en = {
     perks: [
       { title: "Fast delivery", text: "To all 27 governorates in 2–5 days." },
       { title: "Easy exchange", text: "Wrong size? Exchange it within 14 days." },
-      { title: "Cash on delivery", text: "Small 10% deposit online, the rest when your suit arrives." },
+      { title: "Cash on delivery", text: "Small 10% deposit online, the rest when your suit arrives.", textNoDeposit: "Pay the courier when your suit arrives." },
       { title: "Premium fabrics", text: "Wool, linen and velvet that last." },
     ],
     bannerTitle: "Not sure about your size?",
@@ -53,6 +53,7 @@ const en = {
     empty: "No suits match this filter.",
   },
   product: {
+    code: "Product code",
     new: "New",
     sale: "Sale",
     color: "Colour",
@@ -68,6 +69,7 @@ const en = {
     details: "Details",
     delivery: "Delivery & returns",
     deliveryText: "Delivery to all governorates in Egypt within 2–5 days, free on orders over EGP 10,000. Pay online, or cash on delivery with a 10% deposit. Size exchange within 14 days.",
+    deliveryTextNoDeposit: "Delivery to all governorates in Egypt within 2–5 days, free on orders over EGP 10,000. Pay online or cash on delivery. Size exchange within 14 days.",
     back: "Back to shop",
   },
   cart: {
@@ -82,6 +84,7 @@ const en = {
     checkout: "Proceed to checkout",
     remove: "Remove",
     codNote: "Pay online, or cash on delivery with a 10% deposit",
+    codNoteNoDeposit: "Pay online or cash on delivery",
   },
   checkout: {
     title: "Checkout",
@@ -99,6 +102,7 @@ const en = {
     payment: "Payment",
     cod: "Cash on delivery",
     codText: "Pay a {percent}% deposit online now, and the rest in cash when the courier delivers your order.",
+    codTextNoDeposit: "Pay in cash when the courier delivers your order.",
     depositMethodTitle: "How do you want to pay the deposit?",
     codNote: "After you place your order, we'll send you a payment link for the deposit by SMS to your mobile number. We ship your order as soon as the deposit is confirmed; the rest is paid in cash on delivery.",
     codNoteWithEmail: "After you place your order, we'll send you a payment link for the deposit by SMS to your mobile number and to your email. We ship your order as soon as the deposit is confirmed; the rest is paid in cash on delivery.",
@@ -224,7 +228,7 @@ const ar: Dictionary = {
     perks: [
       { title: "توصيل سريع", text: "لكل المحافظات الـ27 في 2–5 أيام." },
       { title: "تبديل سهل", text: "المقاس مش مظبوط؟ بدّله خلال 14 يوم." },
-      { title: "ادفع لما تستلم", text: "عربون صغير 10% أونلاين والباقي لما البدلة توصلك." },
+      { title: "ادفع لما تستلم", text: "عربون صغير 10% أونلاين والباقي لما البدلة توصلك.", textNoDeposit: "بتدفع للمندوب لما البدلة توصلك." },
       { title: "خامات فاخرة", text: "صوف وكتان وقطيفة بتعيش معاك." },
     ],
     bannerTitle: "مش متأكد من مقاسك؟",
@@ -251,6 +255,7 @@ const ar: Dictionary = {
     empty: "مفيش بدل بالاختيار ده.",
   },
   product: {
+    code: "كود المنتج",
     new: "جديد",
     sale: "خصم",
     color: "اللون",
@@ -266,6 +271,7 @@ const ar: Dictionary = {
     details: "التفاصيل",
     delivery: "التوصيل والتبديل",
     deliveryText: "بنوصّل لكل محافظات مصر في 2–5 أيام، والتوصيل ببلاش لو الطلب فوق 10,000 جنيه. ادفع أونلاين أو كاش عند الاستلام بعربون 10%، وتقدر تبدّل المقاس خلال 14 يوم.",
+    deliveryTextNoDeposit: "بنوصّل لكل محافظات مصر في 2–5 أيام، والتوصيل ببلاش لو الطلب فوق 10,000 جنيه. ادفع أونلاين أو كاش عند الاستلام، وتقدر تبدّل المقاس خلال 14 يوم.",
     back: "ارجع للتسوق",
   },
   cart: {
@@ -280,6 +286,7 @@ const ar: Dictionary = {
     checkout: "كمّل الطلب",
     remove: "شيل",
     codNote: "ادفع أونلاين أو كاش عند الاستلام بعربون 10%",
+    codNoteNoDeposit: "ادفع أونلاين أو كاش عند الاستلام",
   },
   checkout: {
     title: "بيانات الطلب",
@@ -297,6 +304,7 @@ const ar: Dictionary = {
     payment: "طريقة الدفع",
     cod: "الدفع عند الاستلام",
     codText: "ادفع عربون {percent}% أونلاين دلوقتي، والباقي كاش للمندوب لما يسلّمك الطلب.",
+    codTextNoDeposit: "هتدفع كاش للمندوب لما يسلّمك الطلب.",
     depositMethodTitle: "هتدفع العربون إزاي؟",
     codNote: "بعد ما تأكد الطلب، هنبعتلك لينك دفع العربون في رسالة SMS على رقم موبايلك. أول ما العربون يتأكد هنشحنلك الطلب، والباقي تدفعه كاش عند الاستلام.",
     codNoteWithEmail: "بعد ما تأكد الطلب، هنبعتلك لينك دفع العربون في رسالة SMS على رقم موبايلك وعلى الإيميل بتاعك. أول ما العربون يتأكد هنشحنلك الطلب، والباقي تدفعه كاش عند الاستلام.",

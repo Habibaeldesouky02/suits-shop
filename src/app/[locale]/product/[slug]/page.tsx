@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import { COD_DEPOSIT } from "@/lib/config";
 import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
@@ -46,7 +47,7 @@ export default async function ProductPage({ params }: PageProps<"/[locale]/produ
           </section>
           <section>
             <h2 className="text-sm font-semibold uppercase tracking-wider text-gold-300">{t.product.delivery}</h2>
-            <p className="mt-3 text-white/70">{t.product.deliveryText}</p>
+            <p className="mt-3 text-white/70">{COD_DEPOSIT ? t.product.deliveryText : t.product.deliveryTextNoDeposit}</p>
           </section>
         </div>
       </ProductPurchase>

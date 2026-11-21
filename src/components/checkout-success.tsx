@@ -87,7 +87,7 @@ export function CheckoutSuccess() {
           <div className="flex justify-between gap-4">
             <dt className="text-white/60">{t.success.paymentMethod}</dt>
             <dd className="font-semibold">
-              {online ? t.checkout.online : t.success.codWithDeposit}
+              {online ? t.checkout.online : payNow > 0 ? t.success.codWithDeposit : t.checkout.cod}
               {methodName && ` · ${methodName}`}
             </dd>
           </div>

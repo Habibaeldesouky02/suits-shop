@@ -36,7 +36,9 @@ export async function handleOrderRequest(request: Request): Promise<Response> {
     return Response.json({ error: "invalid_request" }, { status: 400 });
   }
 
-  const result = parseOrder(body);
+  // Product links in the messages point to the site the order came from
+  // (the workers.dev address now, fastsuit.com.eg once the domain is connected).
+  const result = parseOrder(body, new URL(request.url).origin);
   if ("error" in result) {
     // Pretend spam succeeded so bots don't retry.
     if (result.error === "spam") return Response.json({ orderNumber: "FS-0", total: 0 });

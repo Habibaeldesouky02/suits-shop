@@ -3,7 +3,7 @@ import Link from "next/link";
 import { notFound } from "next/navigation";
 import { isLocale } from "@/i18n/config";
 import { getDictionary } from "@/i18n/dictionaries";
-import { OCCASIONS } from "@/lib/config";
+import { COD_DEPOSIT, OCCASIONS } from "@/lib/config";
 import { products } from "@/lib/products";
 import { ProductCard } from "@/components/product-card";
 import { SuitIllustration } from "@/components/suit-illustration";
@@ -72,7 +72,7 @@ export default async function HomePage({ params }: PageProps<"/[locale]">) {
                 </span>
                 <div>
                   <h3 className="font-semibold">{perk.title}</h3>
-                  <p className="mt-1 text-sm text-white/60">{perk.text}</p>
+                  <p className="mt-1 text-sm text-white/60">{!COD_DEPOSIT && "textNoDeposit" in perk ? perk.textNoDeposit : perk.text}</p>
                 </div>
               </div>
             );

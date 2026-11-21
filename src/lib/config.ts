@@ -18,7 +18,7 @@ export const SHOP = {
    * Cash on delivery: share of the total the customer pays online first as a deposit.
    * 0 = no deposit (everything is paid in cash on delivery). Set it to 10 to turn the 10% deposit on.
    */
-  codDepositPercent: 0 as number,
+  codDepositPercent: 10 as number,
 } as const;
 
 /** Whether cash-on-delivery orders need a deposit paid online first. */
